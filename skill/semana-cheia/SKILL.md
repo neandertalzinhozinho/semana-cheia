@@ -1,66 +1,129 @@
 ---
 name: semana-cheia
-description: Economia de limite do plano Claude Pro para o uso durar os 7 dias da semana. Use quando o usuário falar em "limite", "uso da semana", "ritmo", "modo econômico", "economizar tokens", "semana cheia", pedir para checar ou calibrar o consumo, ou quando o aviso [semana-cheia] do início da sessão indicar modo ECONOMICO ou RESERVA.
+description: Economia de limite do plano Claude Pro sem perder qualidade - ritmo semanal, modos NORMAL/ECONOMICO/RESERVA e orquestração por nível de tarefa (delegar a modelos mais baratos). Use quando o usuário falar em "limite", "uso da semana", "ritmo", "economizar", "delegar", "orquestrar", pedir para checar ou calibrar o consumo, ou quando o aviso [semana-cheia] indicar ECONOMICO ou RESERVA.
 ---
 
 # Semana Cheia
 
-Objetivo: o limite semanal do Claude Pro tem que durar 7 dias. Meta de ritmo: ~14% do limite por dia.
+O limite semanal do Claude Pro tem que durar 7 dias (cerca de 14% por dia) sem piorar o projeto.
 
-## Checar o ritmo
+## 1. Trava de qualidade (vence todas as outras regras)
+
+Economia corta desperdício, nunca correção.
+
+- Ler o necessário para entender antes de editar. Reler se o arquivo pode ter mudado.
+- Verificar tudo o que foi alterado (teste, build ou execução), em qualquer modo.
+- Dúvida sobre API, versão ou comportamento: consultar a documentação ou o código-fonte. Não chutar.
+- Nunca rebaixar o nível de uma tarefa para economizar. Sem limite para fazer bem: adiar ou dividir.
+- Retrabalho custa mais que acertar de primeira.
+
+## 2. Orquestração
+
+O modelo da sessão é o orquestrador: entende o pedido, planeja, decide, delega, confere e responde. Trabalho braçal vai para agentes mais baratos, via ferramenta Agent (ou Task). Sem essa ferramenta, faça você mesmo.
+
+### Níveis
+
+| Nível | Sinais | model | effort |
+|---|---|---|---|
+| simples | buscar, mapear, resumir arquivo ou log, rodar testes e reportar, edição mecânica | haiku | low |
+| comum | feature especificada, bug de causa conhecida, escrever testes, refactor limitado | sonnet | medium |
+| difícil | bug de causa desconhecida, desenho que cruza arquivos, desempenho, concorrência | opus | high |
+| crítica | arquitetura, segurança, dados, dinheiro, ação irreversível | fable | xhigh |
+
+Na dúvida entre dois níveis, use o mais alto. Modelo indisponível: use o próximo acima.
+
+Seu próprio nível: haiku = simples, sonnet = comum, opus = difícil, fable ou mythos = crítica.
+
+### Quem faz
+
+- **Trivial** (até 3 chamadas de ferramenta, contexto já em mãos): você mesmo. Delegar custaria mais.
+- **Abaixo do seu nível**: delegue ao modelo da tabela.
+- **No seu nível**: você mesmo. Um agente do mesmo modelo só paga a partida a frio. Exceção: leitura volumosa que encheria seu contexto.
+- **Acima do seu nível**: delegue para cima e avise o usuário em uma linha.
+- **Difícil ou crítica e grande**: decomponha. Decisão e desenho ficam no nível alto; a execução, já especificada, desce para comum.
+
+Agentes: `sc-batedor` (somente leitura, haiku) e `sc-executor` (edita e roda comandos; passe `model` e `effort` da tabela). Sem eles instalados: `general-purpose` com os mesmos `model` e `effort`.
+
+### Não delegue quando
+
+- O briefing teria que recontar mais de 15 linhas de contexto da conversa.
+- A tarefa exige ida e volta com o usuário a cada passo.
+- Outro agente está editando o mesmo arquivo.
+
+### Briefing (curto e autossuficiente)
+
+1. Objetivo em uma frase, e o porquê.
+2. Arquivos ou área, com os caminhos que você já conhece.
+3. Restrições: o que não tocar, estilo, compatibilidade.
+4. Verificação: o comando que prova que funcionou.
+5. O que significa "pronto".
+
+O formato do relatório já está nos agentes `sc-*`; não repita.
+
+### Conferência (sempre, antes de dar por pronto)
+
+- Leia o diff ou os trechos `arquivo:linha` citados, não os arquivos inteiros.
+- Relatório sem resultado de verificação = não verificado: rode você.
+- Nível crítico: revise a lógica linha a linha.
+- `BLOQUEIO:` — responda ao agente (SendMessage) ou decida você.
+- `INCERTO:` ou falha — suba um nível. Não repita no mesmo.
+
+### Paralelo
+
+Tarefas independentes: lance na mesma mensagem. Nunca dois escritores no mesmo arquivo.
+
+## 3. Monitoramento do limite
 
 ```
 node ~/.claude/skills/semana-cheia/scripts/ritmo.js
 ```
 
-Mostra: dia da semana do ciclo, uso estimado vs. ideal, modo atual, gasto por modelo e as sessões mais caras.
+Mostra dia do ciclo, uso real mais estimado, uso ideal, modo, gasto por modelo e sessões mais caras.
 
-## Monitoramento automático
+O limite real só existe nos servidores. A leitura sem pedir nada ao usuário é a ferramenta `mcp__ccd_session_mgmt__get_usage` do app desktop (carregar com ToolSearch se estiver adiada).
 
-O limite real só existe nos servidores; a única leitura sem pedir nada ao usuário é a ferramenta `mcp__ccd_session_mgmt__get_usage` do app desktop (carregar via ToolSearch se estiver adiada). Fluxo:
-
-1. O hook de início de sessão imprime a linha `[semana-cheia]`. Se a última leitura real tiver mais de 6h, a linha pede sincronização.
-2. Ao receber o pedido (ou antes de uma tarefa grande, ou quando o usuário perguntar do limite): chamar `get_usage` e rodar
+1. O hook de início de sessão imprime a linha `[semana-cheia]`. Com a leitura real vencida (6h; 2h enquanto a escala não está calibrada), a linha pede sincronização.
+2. Ao receber o pedido, antes de uma tarefa grande, ou quando o usuário perguntar do limite: chame `get_usage` e rode
 
    ```
-   node ~/.claude/skills/semana-cheia/scripts/ritmo.js --sync <pct> <resetsAt> <pct5h> <resetsAt5h>
+   node ~/.claude/skills/semana-cheia/scripts/ritmo.js --sync <pct> <resetsAt> <pct5h> <resetsAt5h> <modelo> <pctModelo>
    ```
 
-   - `<pct>`: o MAIOR `percentUsed` entre as janelas "Weekly" (a de um modelo específico pode estourar antes da geral).
-   - `<resetsAt>`: o `resetsAt` semanal. Isso define o início da semana sozinho.
-   - `<pct5h>` e `<resetsAt5h>`: da janela "5-hour limit".
-3. Entre leituras, o script soma à última leitura real o gasto estimado pelos transcripts locais.
+   - `<pct>`, `<resetsAt>`: da janela "Weekly · all models". O `resetsAt` define o início da semana.
+   - `<pct5h>`, `<resetsAt5h>`: da janela "5-hour limit".
+   - `<modelo>`, `<pctModelo>`: da janela semanal de um modelo, se existir (ex.: "Weekly · Fable" vira `fable 9`). Havendo mais de uma, a mais cheia.
+3. A janela mais cheia é o gargalo e define o modo. Se for a de um modelo, só o gasto dele conta: delegar a outros modelos alivia essa janela por inteiro.
+4. Entre leituras, o script soma à leitura real o gasto estimado pelos transcripts locais.
 
-Fazer a sincronização em silêncio; só falar do resultado se o modo não for NORMAL.
+Sincronize em silêncio; só comente se o modo não for NORMAL.
 
-Sem a ferramenta (CLI, outro ambiente): `ritmo.js --calibrar <pct>` com o percentual que o usuário informar (Configurações > Uso), e `ritmo.js --reset <dia 0-6> <hora>` para o reinício semanal.
+Sem a ferramenta (terminal puro): `ritmo.js --calibrar <pct>` com o percentual que o usuário informar, e `ritmo.js --reset <dia 0-6> <hora>`.
 
-## Regras permanentes (todos os modos)
+## 4. Modos
 
-1. **Buscar antes de ler.** Grep/Glob primeiro; Read só do trecho necessário (offset/limit). Nunca reler arquivo já lido ou recém-editado.
-2. **Sem subagentes** a menos que o usuário peça. Cada um recomeça do zero e custa caro.
-3. **Chamadas em paralelo** quando independentes — menos idas e voltas, menos reenvio de contexto.
-4. **Resposta curta.** Resultado primeiro, sem recapitular o que já foi dito, sem listar opções que não serão usadas.
-5. **Não carregar o que não vai usar**: skills, esquemas de ferramentas, páginas web, capturas de tela (prefira texto a screenshot).
-6. **Saída de comando enxuta**: filtrar (`Select-Object -First`, `--quiet`, `| tail`) em vez de despejar logs inteiros.
-7. **Avisar o usuário**, em uma linha, quando perceber desperdício do lado dele: sessão muito longa (sugerir sessão nova com um resumo de 5 linhas), troca de assunto na mesma sessão, modelo caro em tarefa simples.
-
-## Modos
-
-| Modo | Quando | Comportamento |
+| Modo | Quando | Muda o quê |
 |---|---|---|
-| NORMAL | uso dentro do ritmo | Regras permanentes. |
-| ECONOMICO | uso acima do ritmo | + Sugerir Sonnet/Haiku se a sessão estiver em Fable/Opus. Esforço baixo. Respostas mínimas. Nada de artefatos, diagramas, navegador ou pesquisa web sem pedido explícito. Verificação só do essencial. |
-| RESERVA | ≥85% do limite gasto | + Só o que o usuário declarar urgente. Antes de qualquer tarefa grande, dizer o custo provável e perguntar se pode esperar o reinício. |
+| NORMAL | uso dentro do ritmo | Nada além das seções 1, 2 e 5. |
+| ECONOMICO | uso acima do ritmo | Se o gargalo for a janela do seu próprio modelo, delegue tudo o que não exigir o seu nível. Delegue também leitura volumosa trivial. Respostas mínimas. Nada de extras não pedidos (artefatos, diagramas, explicações longas). Uma vez por sessão, lembre que um orquestrador mais barato reduz o custo de coordenação. |
+| RESERVA | 85% ou mais gasto | Só o que o usuário declarar urgente. Antes de tarefa grande, diga o custo provável e pergunte se pode esperar o reinício. |
 
-## Hábitos do usuário (lembrar quando for relevante, sem sermão)
+O nível das tarefas e a verificação não mudam em nenhum modo.
 
-- **Modelo**: Sonnet como padrão; Haiku para tarefas mecânicas; Fable/Opus só para arquitetura e bugs difíceis.
-- **Uma tarefa por sessão**; assunto novo = sessão nova. Não retomar conversas antigas e enormes.
-- **Juntar pedidos** em uma mensagem em vez de várias pequenas.
-- **Desligar conectores/plugins** que o projeto não usa (cada um pesa em toda sessão).
-- **CLAUDE.md enxuto**: só o que muda comportamento.
+Ao fechar tarefa grande em ECONOMICO ou RESERVA: uma linha com uso atual, ideal e sobra por dia.
 
-## Ao fechar uma tarefa grande
+## 5. Economia do dia a dia
 
-Se o ritmo estiver em ECONOMICO ou RESERVA, terminar com uma linha: uso atual, ideal, e quanto sobra por dia até o reinício.
+1. Buscar antes de ler; ler trechos; não reler o que não mudou.
+2. Chamadas independentes em paralelo.
+3. Resposta curta, resultado primeiro, sem recapitular.
+4. Filtrar a saída de comandos.
+5. Texto em vez de screenshot. Navegador, pesquisa web e artefatos só quando a tarefa precisa.
+6. Avisar em uma linha: sessão longa demais, troca de assunto na mesma sessão.
+
+## 6. Hábitos do usuário (lembrar quando for relevante, sem sermão)
+
+- Uma tarefa por sessão; assunto novo, sessão nova.
+- Sessão grande parada por mais de uma hora: melhor abrir outra com um resumo do que retomar.
+- Juntar pedidos em uma mensagem.
+- Desligar conectores e plugins que o projeto não usa.
+- Só tarefas simples no dia: escolher um modelo mais barato para a sessão.

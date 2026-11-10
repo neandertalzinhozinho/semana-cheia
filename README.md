@@ -7,7 +7,8 @@ Faz o limite semanal do Claude Pro durar os 7 dias.
 | Peça | Onde | Para quê |
 |---|---|---|
 | Skill `semana-cheia` | `~/.claude/skills/semana-cheia` | Regras completas, modos NORMAL / ECONOMICO / RESERVA |
-| Bloco de regras | `~/.claude/CLAUDE.md` | Regras básicas ativas em toda sessão |
+| Agentes `sc-batedor`, `sc-executor` | `~/.claude/agents` | Recebem o trabalho delegado, com poucas ferramentas e relatório curto |
+| Bloco de regras | `~/.claude/CLAUDE.md` | Trava de qualidade, orquestração e economia ativas em toda sessão |
 | Hook `SessionStart` | `~/.claude/settings.json` | Uma linha com o ritmo da semana no início de cada sessão |
 | `ritmo.js` | dentro da skill | Mede o consumo pelos transcripts locais |
 
@@ -34,6 +35,20 @@ Opções: `node instalar.js --sem-hook` (sem o aviso de início de sessão) · `
 ## Uso
 
 - Ver o ritmo: `node ~/.claude/skills/semana-cheia/scripts/ritmo.js`, ou peça ao Claude "checa meu ritmo".
+
+## Orquestração
+
+O modelo que você escolher para a sessão vira o orquestrador: planeja, decide, delega e confere. Cada tarefa vai para o modelo do seu nível:
+
+| Nível | Exemplos | Modelo | Effort |
+|---|---|---|---|
+| trivial | até 3 chamadas de ferramenta | o próprio orquestrador | — |
+| simples | buscar, mapear, resumir, rodar testes, edição mecânica | haiku | low |
+| comum | feature especificada, bug de causa conhecida, testes | sonnet | medium |
+| difícil | causa desconhecida, desenho multi-arquivo, desempenho | opus | high |
+| crítica | arquitetura, segurança, dados, dinheiro, irreversível | fable | xhigh |
+
+Travas: o nível nunca é rebaixado para economizar; todo resultado delegado é conferido (diff e verificação); falha sobe um nível em vez de repetir.
 
 ## Limites da medição
 

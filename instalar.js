@@ -23,6 +23,18 @@ if (!remover) {
   console.log('Skill copiada para', DESTINO);
 }
 
+// 1b. Agentes de delegação (sc-batedor, sc-executor)
+const AG_ORIGEM = path.join(__dirname, 'agentes');
+const AG_DESTINO = path.join(CLAUDE, 'agents');
+const shell = process.platform === 'win32' ? 'Bash, PowerShell' : 'Bash';
+for (const nome of fs.readdirSync(AG_ORIGEM).filter((n) => n.endsWith('.md'))) {
+  const alvo = path.join(AG_DESTINO, nome);
+  if (remover) { fs.rmSync(alvo, { force: true }); continue; }
+  fs.mkdirSync(AG_DESTINO, { recursive: true });
+  fs.writeFileSync(alvo, fs.readFileSync(path.join(AG_ORIGEM, nome), 'utf8').replace('{{SHELL}}', shell));
+}
+if (!remover) console.log('Agentes instalados em', AG_DESTINO);
+
 // 2. Bloco no CLAUDE.md global (substitui o bloco anterior, preserva o resto)
 let md = fs.existsSync(CLAUDE_MD) ? fs.readFileSync(CLAUDE_MD, 'utf8') : '';
 const i = md.indexOf(INI), j = md.indexOf(FIM);
