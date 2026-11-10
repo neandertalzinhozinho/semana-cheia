@@ -1,0 +1,11 @@
+{
+  "name": "semana-cheia",
+  "owner": { "name": "neandertalzinhozinho" },
+  "plugins": [
+    {
+      "name": "semana-cheia",
+      "source": "./",
+      "description": "Faz o limite semanal do Claude Pro durar 7 dias sem perder qualidade: ritmo semanal, modos de economia e orquestração por nível de tarefa."
+    }
+  ]
+}

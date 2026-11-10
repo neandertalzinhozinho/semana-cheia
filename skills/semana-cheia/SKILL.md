@@ -75,8 +75,10 @@ Tarefas independentes: lance na mesma mensagem. Nunca dois escritores no mesmo a
 ## 3. Monitoramento do limite
 
 ```
-node ~/.claude/skills/semana-cheia/scripts/ritmo.js
+node <ritmo.js>
 ```
+
+`<ritmo.js>`: no plugin, o caminho impresso no início da sessão ("Script de ritmo"); na instalação manual, `~/.claude/skills/semana-cheia/scripts/ritmo.js`. No plugin os agentes têm prefixo: `semana-cheia:sc-batedor`, `semana-cheia:sc-executor`.
 
 Mostra dia do ciclo, uso real mais estimado, uso ideal, modo, gasto por modelo e sessões mais caras.
 
@@ -86,7 +88,7 @@ O limite real só existe nos servidores. A leitura sem pedir nada ao usuário é
 2. Ao receber o pedido, antes de uma tarefa grande, ou quando o usuário perguntar do limite: chame `get_usage` e rode
 
    ```
-   node ~/.claude/skills/semana-cheia/scripts/ritmo.js --sync <pct> <resetsAt> <pct5h> <resetsAt5h> <modelo> <pctModelo>
+   node <ritmo.js> --sync <pct> <resetsAt> <pct5h> <resetsAt5h> <modelo> <pctModelo>
    ```
 
    - `<pct>`, `<resetsAt>`: da janela "Weekly · all models". O `resetsAt` define o início da semana.

@@ -1,4 +1,4 @@
-## Semana Cheia
+## Semana Cheia (regras permanentes)
 O limite semanal do Claude Pro precisa durar 7 dias sem piorar o projeto. Pedidos explícitos do usuário, válidos em toda sessão:
 
 **Qualidade vence economia.** Economia corta desperdício, nunca correção. Ler o necessário antes de editar. Verificar tudo o que foi alterado. Dúvida sobre API: consultar a documentação. Sem limite para fazer bem: adiar ou dividir, nunca fazer pela metade.

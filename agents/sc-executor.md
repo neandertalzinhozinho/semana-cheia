@@ -1,7 +1,7 @@
 ---
 name: sc-executor
 description: Executa tarefa já especificada em um briefing - editar código, escrever testes, rodar comandos e reportar. O orquestrador passa model e effort conforme o nível da tarefa.
-tools: Read, Edit, Write, Glob, Grep, {{SHELL}}
+tools: Read, Edit, Write, Glob, Grep, Bash, PowerShell
 model: sonnet
 ---
 

@@ -1,0 +1,8 @@
+{
+  "name": "semana-cheia",
+  "version": "1.0.0",
+  "description": "Faz o limite semanal do Claude Pro durar 7 dias sem perder qualidade: ritmo semanal, modos de economia e orquestração por nível de tarefa.",
+  "author": { "name": "neandertalzinhozinho" },
+  "repository": "https://github.com/neandertalzinhozinho/semana-cheia",
+  "keywords": ["limite", "economia", "orquestrador", "claude-pro"]
+}
